@@ -7,7 +7,10 @@
 #else
  #include "WProgram.h"
 #endif
+
 #include "gfxfont.h"
+
+#define swap(a, b) { int16_t t = a; a = b; b = t; }
 
 class Adafruit_GFX : public Print {
 
@@ -15,198 +18,74 @@ class Adafruit_GFX : public Print {
 
   Adafruit_GFX(int16_t w, int16_t h); // Constructor
 
-  // This MUST be defined by the subclass:
+  // 核心抽象方法（子类必须实现）
   virtual void drawPixel(int16_t x, int16_t y, uint16_t color) = 0;
 
-  // TRANSACTION API / CORE DRAW API
-  // These MAY be overridden by the subclass to provide device-specific
-  // optimized code.  Otherwise 'generic' versions are used.
-  virtual void startWrite(void);
-  virtual void writePixel(int16_t x, int16_t y, uint16_t color);
-  virtual void writeFillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color);
-  virtual void writeFastVLine(int16_t x, int16_t y, int16_t h, uint16_t color);
-  virtual void writeFastHLine(int16_t x, int16_t y, int16_t w, uint16_t color);
-  virtual void writeLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t color);
-  virtual void endWrite(void);
-
-  // CONTROL API
-  // These MAY be overridden by the subclass to provide device-specific
-  // optimized code.  Otherwise 'generic' versions are used.
-  virtual void setRotation(uint8_t r);
+  // 可被子类重写的绘制方法
+  virtual void drawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t color);
+  virtual void drawFastVLine(int16_t x, int16_t y, int16_t h, uint16_t color);
+  virtual void drawFastHLine(int16_t x, int16_t y, int16_t w, uint16_t color);
+  virtual void drawRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color);
+  virtual void fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color);
+  virtual void fillScreen(uint16_t color);
   virtual void invertDisplay(boolean i);
 
-  // BASIC DRAW API
-  // These MAY be overridden by the subclass to provide device-specific
-  // optimized code.  Otherwise 'generic' versions are used.
-  virtual void
-    // It's good to implement those, even if using transaction API
-    drawFastVLine(int16_t x, int16_t y, int16_t h, uint16_t color),
-    drawFastHLine(int16_t x, int16_t y, int16_t w, uint16_t color),
-    fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color),
-    fillScreen(uint16_t color),
-    // Optional and probably not necessary to change
-    drawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t color),
-    drawRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color);
-  // These exist only with Adafruit_GFX (no subclass overrides)
-  void
-    drawCircle(int16_t x0, int16_t y0, int16_t r, uint16_t color),
-    drawCircleHelper(int16_t x0, int16_t y0, int16_t r, uint8_t cornername,
-      uint16_t color),
-    fillCircle(int16_t x0, int16_t y0, int16_t r, uint16_t color),
-    fillCircleHelper(int16_t x0, int16_t y0, int16_t r, uint8_t cornername,
-      int16_t delta, uint16_t color),
-	  drawPentagram(int16_t x0, int16_t y0, int16_t r0, uint16_t color),
-	 drawEllipse(int16_t x1, int16_t y1, int16_t x2, int16_t y2, int16_t a, uint16_t color),
-    drawTriangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1,
-      int16_t x2, int16_t y2, uint16_t color),
-    fillTriangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1,
-      int16_t x2, int16_t y2, uint16_t color),
-    drawRoundRect(int16_t x0, int16_t y0, int16_t w, int16_t h,
-      int16_t radius, uint16_t color),
-    fillRoundRect(int16_t x0, int16_t y0, int16_t w, int16_t h,
-      int16_t radius, uint16_t color),
-    drawBitmap(int16_t x, int16_t y, const uint8_t bitmap[],
-      int16_t w, int16_t h, uint16_t color),
-    drawBitmap(int16_t x, int16_t y, const uint8_t bitmap[],
-      int16_t w, int16_t h, uint16_t color, uint16_t bg),
-    drawBitmap(int16_t x, int16_t y, uint8_t *bitmap,
-      int16_t w, int16_t h, uint16_t color),
-    drawBitmap(int16_t x, int16_t y, uint8_t *bitmap,
-      int16_t w, int16_t h, uint16_t color, uint16_t bg),
-    drawXBitmap(int16_t x, int16_t y, const uint8_t bitmap[],
-      int16_t w, int16_t h, uint16_t color),
-    drawGrayscaleBitmap(int16_t x, int16_t y, const uint8_t bitmap[],
-      int16_t w, int16_t h),
-    drawGrayscaleBitmap(int16_t x, int16_t y, uint8_t *bitmap,
-      int16_t w, int16_t h),
-    drawGrayscaleBitmap(int16_t x, int16_t y,
-      const uint8_t bitmap[], const uint8_t mask[],
-      int16_t w, int16_t h),
-    drawGrayscaleBitmap(int16_t x, int16_t y,
-      uint8_t *bitmap, uint8_t *mask, int16_t w, int16_t h),
-    drawRGBBitmap(int16_t x, int16_t y, const uint16_t bitmap[],
-      int16_t w, int16_t h),
-    drawRGBBitmap(int16_t x, int16_t y, uint16_t *bitmap,
-      int16_t w, int16_t h),
-    drawRGBBitmap(int16_t x, int16_t y,
-      const uint16_t bitmap[], const uint8_t mask[],
-      int16_t w, int16_t h),
-    drawRGBBitmap(int16_t x, int16_t y,
-      uint16_t *bitmap, uint8_t *mask, int16_t w, int16_t h),
-    drawChar(int16_t x, int16_t y, unsigned char c, uint16_t color,
-      uint16_t bg, uint8_t size),
-    setCursor(int16_t x, int16_t y),
-    setTextColor(uint16_t c),
-    setTextColor(uint16_t c, uint16_t bg),
-    setTextSize(uint8_t s),
-    setTextWrap(boolean w),
-    cp437(boolean x=true),
-    setFont(const GFXfont *f = NULL),
-    getTextBounds(char *string, int16_t x, int16_t y,
-      int16_t *x1, int16_t *y1, uint16_t *w, uint16_t *h),
-    getTextBounds(const __FlashStringHelper *s, int16_t x, int16_t y,
-      int16_t *x1, int16_t *y1, uint16_t *w, uint16_t *h);
+  // 通用绘制方法（无需重写）
+  void drawCircle(int16_t x0, int16_t y0, int16_t r, uint16_t color);
+  void drawCircleHelper(int16_t x0, int16_t y0, int16_t r, uint8_t cornername, uint16_t color);
+  void fillCircle(int16_t x0, int16_t y0, int16_t r, uint16_t color);
+  void fillCircleHelper(int16_t x0, int16_t y0, int16_t r, uint8_t cornername, int16_t delta, uint16_t color);
+  void drawTriangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t x2, int16_t y2, uint16_t color);
+  void fillTriangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t x2, int16_t y2, uint16_t color);
+  void drawRoundRect(int16_t x0, int16_t y0, int16_t w, int16_t h, int16_t radius, uint16_t color);
+  void fillRoundRect(int16_t x0, int16_t y0, int16_t w, int16_t h, int16_t radius, uint16_t color);
+  void drawBitmap(int16_t x, int16_t y, const uint8_t *bitmap, int16_t w, int16_t h, uint16_t color);
+  void drawBitmap(int16_t x, int16_t y, const uint8_t *bitmap, int16_t w, int16_t h, uint16_t color, uint16_t bg);
+  void drawXBitmap(int16_t x, int16_t y, const uint8_t *bitmap, int16_t w, int16_t h, uint16_t color);
+  void drawChar(int16_t x, int16_t y, unsigned char c, uint16_t color, uint16_t bg, uint8_t size);
+  void setCursor(int16_t x, int16_t y);
+  void setTextColor(uint16_t c);
+  void setTextColor(uint16_t c, uint16_t bg);
+  void setTextSize(uint8_t s);
+  void setTextWrap(boolean w);
+  void setRotation(uint8_t r);
+  void cp437(boolean x=true);
+  uint8_t getRotation(void) const;
+
+  void setFont(const GFXfont *f = NULL);
+  void drawCentreString(const char *buf, int16_t x, int16_t y, uint8_t size);
+  void drawRightString(const char *buf, int16_t x, int16_t y, uint8_t size);
 
 #if ARDUINO >= 100
   virtual size_t write(uint8_t);
 #else
-  virtual void   write(uint8_t);
+  virtual void write(uint8_t);
 #endif
 
   int16_t height(void) const;
   int16_t width(void) const;
 
-  uint8_t getRotation(void) const;
-
-  // get current cursor position (get rotation safe maximum values, using: width() for x, height() for y)
+  uint8_t getTextSize(void) const;
+  uint16_t getTextColor(void) const;
+  uint16_t getTextBgColor(void) const;
+  boolean getTextWrap(void) const;
   int16_t getCursorX(void) const;
   int16_t getCursorY(void) const;
 
+  // ========== 新增：五角星+椭圆方法声明 ==========
+  // 五角星：x0/y0=中心坐标，radius=半径，color=颜色
+  void drawPentagram(int16_t x0, int16_t y0, int16_t radius, uint16_t color);
+  // 椭圆：x0/y0=中心坐标，rx=横轴半径，ry=纵轴半径，color=颜色
+  void drawEllipse(int16_t x0, int16_t y0, int16_t rx, int16_t ry, uint16_t color);
+
  protected:
-  void
-    charBounds(char c, int16_t *x, int16_t *y,
-      int16_t *minx, int16_t *miny, int16_t *maxx, int16_t *maxy);
-  const int16_t
-    WIDTH, HEIGHT;   // This is the 'raw' display w/h - never changes
-  int16_t
-    _width, _height, // Display w/h as modified by current rotation
-    cursor_x, cursor_y;
-  uint16_t
-    textcolor, textbgcolor;
-  uint8_t
-    textsize,
-    rotation;
-  boolean
-    wrap,   // If set, 'wrap' text at right edge of display
-    _cp437; // If set, use correct CP437 charset (default is off)
-  GFXfont
-    *gfxFont;
-};
-
-class Adafruit_GFX_Button {
-
- public:
-  Adafruit_GFX_Button(void);
-  // "Classic" initButton() uses center & size
-  void initButton(Adafruit_GFX *gfx, int16_t x, int16_t y,
-   uint16_t w, uint16_t h, uint16_t outline, uint16_t fill,
-   uint16_t textcolor, char *label, uint8_t textsize);
-  // New/alt initButton() uses upper-left corner & size
-  void initButtonUL(Adafruit_GFX *gfx, int16_t x1, int16_t y1,
-   uint16_t w, uint16_t h, uint16_t outline, uint16_t fill,
-   uint16_t textcolor, char *label, uint8_t textsize);
-  void drawButton(boolean inverted = false);
-  boolean contains(int16_t x, int16_t y);
-
-  void press(boolean p);
-  boolean isPressed();
-  boolean justPressed();
-  boolean justReleased();
-
- private:
-  Adafruit_GFX *_gfx;
-  int16_t       _x1, _y1; // Coordinates of top-left corner
-  uint16_t      _w, _h;
-  uint8_t       _textsize;
-  uint16_t      _outlinecolor, _fillcolor, _textcolor;
-  char          _label[10];
-
-  boolean currstate, laststate;
-};
-
-class GFXcanvas1 : public Adafruit_GFX {
- public:
-  GFXcanvas1(uint16_t w, uint16_t h);
-  ~GFXcanvas1(void);
-  void     drawPixel(int16_t x, int16_t y, uint16_t color),
-           fillScreen(uint16_t color);
-  uint8_t *getBuffer(void);
- private:
-  uint8_t *buffer;
-};
-
-class GFXcanvas8 : public Adafruit_GFX {
- public:
-  GFXcanvas8(uint16_t w, uint16_t h);
-  ~GFXcanvas8(void);
-  void     drawPixel(int16_t x, int16_t y, uint16_t color),
-           fillScreen(uint16_t color),
-           writeFastHLine(int16_t x, int16_t y, int16_t w, uint16_t color);
-
-  uint8_t *getBuffer(void);
- private:
-  uint8_t *buffer;
-};
-
-class GFXcanvas16 : public Adafruit_GFX {
- public:
-  GFXcanvas16(uint16_t w, uint16_t h);
-  ~GFXcanvas16(void);
-  void      drawPixel(int16_t x, int16_t y, uint16_t color),
-            fillScreen(uint16_t color);
-  uint16_t *getBuffer(void);
- private:
-  uint16_t *buffer;
+  const GFXfont *gfxFont;
+  int16_t  _width, _height;   // 屏幕分辨率（旋转后）
+  int16_t  cursor_x, cursor_y; // 文本光标位置
+  uint16_t textcolor, textbgcolor; // 文本颜色/背景色
+  uint8_t  textsize; // 文本大小
+  boolean  textwrap, _cp437; // 自动换行/CP437字符集
+  uint8_t  rotation; // 屏幕旋转角度（0-3）
 };
 
 #endif // _ADAFRUIT_GFX_H

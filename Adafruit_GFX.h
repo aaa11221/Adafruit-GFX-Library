@@ -9,9 +9,25 @@
 #endif
 #include "gfxfont.h"
 
-class Adafruit_GFX : public Print {
+class Adafruit_GFX :
+	 protected:
+    const int16_t _width, _height;
+    int16_t cursor_x, cursor_y;
+    uint16_t textcolor, textbgcolor;
+    uint8_t textsize, rotation;
+    bool wrap;
+
+ public Print {
 
  public:
+ // 1. 大五角星绘制（支持任意中心、半径）
+    void drawBigPentagram(int16_t x0, int16_t y0, int16_t radius, uint16_t color);
+    // 2. 小五角星绘制（支持任意中心、半径）
+    void drawSmallPentagram(int16_t x0, int16_t y0, int16_t radius, uint16_t color);
+    // 3. 心形绘制（支持任意中心、尺寸系数）
+    void drawHeart(int16_t x0, int16_t y0, int16_t size, uint16_t color);
+    // 4. 椭圆绘制（支持任意中心、长/短半轴）
+    void drawEllipse(int16_t x0, int16_t y0, int16_t rx, int16_t ry, uint16_t color);
 
   Adafruit_GFX(int16_t w, int16_t h); // Constructor
 

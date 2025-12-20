@@ -1389,4 +1389,92 @@ void GFXcanvas16::fillScreen(uint16_t color) {
     }
 }
 
+void Adafruit_GFX::drawBigPentagram(int16_t x0, int16_t y0, int16_t radius, uint16_t color) {
+    if (radius <= 0) return;
+    int16_t x[5], y[5];
+    // 极坐标计算5个顶点（适配屏幕y轴向下）
+    for (int i = 0; i < 5; i++) {
+        float angle = 2 * PI * (i * 0.6 - 0.1); // 72°间隔，调整顶点朝向
+        x[i] = x0 + radius * cos(angle);
+        y[i] = y0 - radius * sin(angle);
+    }
+    // 连接顶点形成闭合五角星
+    drawLine(x[0], y[0], x[2], y[2], color);
+    drawLine(x[2], y[2], x[4], y[4], color);
+    drawLine(x[4], y[4], x[1], y[1], color);
+    drawLine(x[1], y[1], x[3], y[3], color);
+    drawLine(x[3], y[3], x[0], y[0], color);
+}
 
+// 2. 小五角星实现（图中上方小五角星）
+void Adafruit_GFX::drawSmallPentagram(int16_t x0, int16_t y0, int16_t radius, uint16_t color) {
+    // 逻辑与大五角星一致，仅参数尺寸更小
+    if (radius <= 0) return;
+    int16_t x[5], y[5];
+    for (int i = 0; i < 5; i++) {
+        float angle = 2 * PI * (i * 0.6 - 0.1);
+        x[i] = x0 + radius * cos(angle);
+        y[i] = y0 - radius * sin(angle);
+    }
+    drawLine(x[0], y[0], x[2], y[2], color);
+    drawLine(x[2], y[2], x[4], y[4], color);
+    drawLine(x[4], y[4], x[1], y[1], color);
+    drawLine(x[1], y[1], x[3], y[3], color);
+    drawLine(x[3], y[3], x[0], y[0], color);
+}
+
+// 3. 心形实现（图中中间心形）
+void Adafruit_GFX::drawHeart(int16_t x0, int16_t y0, int16_t size, uint16_t color) {
+    if (size <= 0) return;
+    float x, y, theta;
+    // 心形极坐标公式：r = size*(1 - sinθ)
+    for (theta = 0; theta < 2 * PI; theta += 0.01) {
+        float r = size * (1 - sin(theta));
+        x = r * cos(theta);
+        y = r * sin(theta);
+        // 适配屏幕坐标系（y轴向下）
+        drawPixel(x0 + x, y0 - y, color);
+    }
+}
+
+// 4. 椭圆实现（图中右侧椭圆）
+void Adafruit_GFX::drawEllipse(int16_t x0, int16_t y0, int16_t rx, int16_t ry, uint16_t color) {
+    if (rx <= 0 || ry <= 0) return;
+    int16_t x = 0, y = ry;
+    int32_t rx2 = (int32_t)rx * rx;
+    int32_t ry2 = (int32_t)ry * ry;
+    int32_t fx2 = 4 * rx2, fy2 = 4 * ry2;
+    int32_t p;
+
+    // 椭圆上半部分
+    p = ry2 - (rx2 * ry) + (0.25 * rx2);
+    while (rx2 * y > ry2 * x) {
+        drawPixel(x0 + x, y0 + y, color);
+        drawPixel(x0 - x, y0 + y, color);
+        drawPixel(x0 + x, y0 - y, color);
+        drawPixel(x0 - x, y0 - y, color);
+        if (p < 0) {
+            p += ry2 * (2 * x + 3);
+        } else {
+            p += ry2 * (2 * x + 3) + fx2 * (1 - y);
+            y--;
+        }
+        x++;
+    }
+
+    // 椭圆下半部分
+    p = ry2 * (x + 0.5) * (x + 0.5) + rx2 * (y - 1) * (y - 1) - rx2 * ry2;
+    while (y >= 0) {
+        drawPixel(x0 + x, y0 + y, color);
+        drawPixel(x0 - x, y0 + y, color);
+        drawPixel(x0 + x, y0 - y, color);
+        drawPixel(x0 - x, y0 - y, color);
+        if (p < 0) {
+            p += ry2 * (2 * x + 3) + fy2 * (1 - y);
+            x++;
+        } else {
+            p += fy2 * (2 - y);
+        }
+        y--;
+    }
+}
